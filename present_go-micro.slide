@@ -6,6 +6,14 @@ Loh Siu Yin
 Technology Consultant, Beyond Broadcast LLP
 siuyin@beyondbroadcast.com
 
+* Motivation
+
+- I wanted to try out Go Micro
+
+- I also wanted to see how go modules (aka vgo) handles dependencies like gRPC and protocol buffers used by Go Micro.
+
+I had issues before with gRPC, protocol buffers and dependency management tools managing the ./vendor folder
+
 * Go Micro
 .link https://github.com/micro/go-micro
 
@@ -37,20 +45,22 @@ siuyin@beyondbroadcast.com
 
 - does not make use of imports found in $GOPATH/src
 
-If it does it would include what ever version is found there and that could break build dependencies
+If it does, it would include what ever version is found there and that could break build dependencies
 
 So how do we get started the go mod way?
 
 - Use at least go 1.11 where modules experimental support is enabled
 
-- Think of a name for your module. I'm going to use gomicrotry .
+- Think of a name for your module. I'm going to use *gomicrotry* .
 
 * Chicken and the egg
 
 * go mod init
 
 - needs go code to initialize a go.mod file.
-- protoc, protoc-gen-go _and_ protoc-gen-micro needed to generate the go stub code
+- protoc, protoc-gen-go _and_ protoc-gen-micro are needed to generate the go stub code
+
+---
 
 You still need the protoc executable.
 
@@ -60,9 +70,9 @@ You still need the protoc executable.
   unzip, make executable, then copy protoc to a location in your PATH
   to check: protoc --version
 
-go get -u github.com/golang/protobuf/protoc-gen-go
+go get -u github.com/golang/protobuf/protoc-gen-*go*
 
-go get github.com/micro/protoc-gen-micro
+go get github.com/micro/protoc-gen-*micro*
 
 * Write a starter go.mod
 file: go.mod
@@ -71,7 +81,7 @@ file: go.mod
 
 We manually create this file at the root of out project folder.
 
-The go tools look out for this file and will manage it for you when you run go build.
+The go tools look out for this file and will manage it for you when you run go build, go run, go get etc.
 
 * Write protobuf IDL spec
 
@@ -181,6 +191,87 @@ That is the job of the service registry: consul, kubernetes etc.
 
   cd cmd/hello-client
   ./hello-client
+
+* What have we seen?
+
+- go-micro is a nice, quite easy to use RPC framework
+
+- It has built-in service discovery. While it defaults to consult, you can swap it out for others. It can even run with no external dependency if you use multicast DNS (mDNS).
+
+- Built-in service load-balancing
+
+---
+
+- go modules pulls in and locks down dependencies in a go.mod file at the root folder of the project
+
+- go get, go build and/or go run updates go.mod
+
+- go modules require go 1.11 or above (previously you can use vgo with go get github.com/golang/vgo)
+
+* Go Micro functions
+
+* Get the command line tool
+
+- go get github.com/micro/micro
+
+The *micro* command line tool can be used to call service (long-running) or functions (one-shot).
+
+  micro call <registered_name> <rpc_method> <args>
+  eg.
+  micro call greeter Greeter.Hello '{"name":"CLI caller"}'
+
+
+file: call_service.sh
+.play -edit call_service.sh
+
+Try changing the name above and re-running.
+
+* Function definition
+file: cmd/hello-function/main.go
+
+.code cmd/hello-function/main.go /10 O/,/20 O/
+
+So far it looks pretty much the same as a service.
+
+* Function main()
+
+.code cmd/hello-function/main.go /30 O/,/40 O/
+
+(2) is where the difference is. It is a micro.NewFunction and I have registered it under a different micro name of "greeter-func".
+
+
+* Demo: Go Micro Functions
+
+- Launch a function instance
+
+  cd cmd/hello-function
+  go build
+  ./hello-function
+
+- Invoke / call the function instance
+
+  micro call greeter-func Greeter.Hello '{"name": "func caller"}'
+
+---
+
+As you will have seen, the function exits immediately after it has been called. 
+
+I could not find any feature of the micro command line or the go-micro library for the function executable to be dynamically loaded and executed when it is called.
+
+* go-micro asynchronous messaging
+
+Go Micro has pub/sub as well:
+
+" PubSub at the client/server level works much like RPC but for async comms. It uses the same encoding but rather than using the transport interface it uses the broker for messaging. This includes the ability to encode metadata into context which is passed through with messages. "
+
+-- https://github.com/micro/examples/tree/master/pubsub
+
+---
+
+Looking through the example code, I find trying to squeeze messaging into a RPC world rather awkward.
+
+I will stick to traditional messaging systems like NATS or NATS-Streaming.
+
 
 * Presentation and code download
 
