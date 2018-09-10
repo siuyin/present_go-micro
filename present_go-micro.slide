@@ -60,7 +60,18 @@ So how do we get started the go mod way?
 - needs go code to initialize a go.mod file.
 - protoc, protoc-gen-go _and_ protoc-gen-micro are needed to generate the go stub code
 
----
+To break the tie, write a starter go.mod.
+
+* Write a starter go.mod
+file: go.mod
+
+  module gomicrotry
+
+We manually create this file at the root of out project folder.
+
+The go tools look out for this file and will manage it for you when you run go build, go run, go get etc.
+
+* Binaries still required ..
 
 You still need the protoc executable.
 
@@ -74,14 +85,6 @@ go get -u github.com/golang/protobuf/protoc-gen-*go*
 
 go get github.com/micro/protoc-gen-*micro*
 
-* Write a starter go.mod
-file: go.mod
-
-  module gomicrotry
-
-We manually create this file at the root of out project folder.
-
-The go tools look out for this file and will manage it for you when you run go build, go run, go get etc.
 
 * Write protobuf IDL spec
 
@@ -108,7 +111,7 @@ file: cmd/hello-server/main.go
 .code cmd/hello-server/main.go /10 O/,/20 O/
 
 Nothing special here except for the proto import.
-Note it uses our package name *gomicrotry*.
+Note it uses our module name *gomicrotry* when importing proto.
 
 * Define the Greeter type
 .code cmd/hello-server/main.go /30 O/,/40 O/
@@ -118,7 +121,7 @@ We define here Greeter.Hello method.
 Note we pass in pointers to both HelloRequest and HelloResponse.
 This is the convention used by go-micro.
 
-I don't normally pass in a pointer for HelloRequest as I do not intent to change the value of HelloRequest.
+I don't normally pass in a pointer for HelloRequest as I do not intend to change the value of HelloRequest.
 
 go-micro probably does this for zero-copy, performance reasons.
 
@@ -272,6 +275,13 @@ Looking through the example code, I find trying to squeeze messaging into a RPC 
 
 I will stick to traditional messaging systems like NATS or NATS-Streaming.
 
+* My opinions
+I feel go-micro:
+
+- tries to do _too_ much (service disovery, load balancing ...)
+- is easy but not simple. It pulls in a lot of internal dependencies and by default relies on external dependency consul for its service registry.
+- is trying to do even more -- functions, pub-sub, working with the micro command line tool for API gateway etc.
+- is highly opinionated. go-micro reminds me of ruby-on-rails. It is super-easy and very productive but has a lot of _magic_ under the covers.
 
 * Presentation and code download
 
